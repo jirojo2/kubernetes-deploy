@@ -1,0 +1,16 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: create the 'kubernetes' user
+      user: name=kubernetes append=yes state=present createhome=yes shell=/bin/bash
+
+    - name: allow 'kubernetes' to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        line: 'kubernetes ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: set up authorized keys for the kubernetes user
+      authorized_key: user=kubernetes key="{{item}}"
+      with_file:
+        - ~/.ssh/id_rsa.pub

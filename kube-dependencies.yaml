@@ -1,0 +1,70 @@
+- hosts: all
+  become: yes
+  tasks:
+
+   - name: Install packages for apt add repository over HTTPS
+     become: yes
+     apt:
+      name: "{{ packagesdep }}"
+      state: present
+     vars:
+      packagesdep:
+       - git
+       - apt-transport-https
+       - ca-certificates
+       - wget
+       - software-properties-common
+       - gnupg2
+       - curl
+
+   - name: Add Apt signing key from official docker repo
+     apt_key:
+       url: https://download.docker.com/linux/debian/gpg
+       state: present
+
+   - name: add docker official repository for Debian Stretch
+     apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+      state: present
+
+   - name: Index new repo into the cache
+     become: yes
+     apt:
+      name: "*"
+      state: present
+
+   - name: actually install docker
+     apt:
+      name: "docker-ce=18.06*"
+      state: present
+
+   - name: add Kubernetes apt-key
+     apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
+
+   - name: add Kubernetes' APT repository
+     apt_repository:
+      repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
+      filename: 'kubernetes'
+
+   - name: install kubelet
+     apt:
+       name: kubelet=1.13.4-00
+       state: present
+       update_cache: true
+
+   - name: install kubeadm
+     apt:
+       name: kubeadm=1.13.4-00
+       state: present
+
+- hosts: master
+  become: yes
+  tasks:
+   - name: install kubectl
+     apt:
+       name: kubectl=1.13.4-00
+       state: present
+       force: yes
